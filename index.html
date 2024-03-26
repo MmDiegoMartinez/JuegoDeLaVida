@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Juego de la vida</title>
+  <script src="aframe.min.js"></script>
+  <style>
+    .mensaje {
+      position: absolute;
+      top: 10px; 
+      left: 10px; 
+    
+      padding: 10px;
+      border-radius: 5px;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 16px;
+      z-index: 1001; /* emcima de la escena */
+    }
+    @keyframes fadeOut {
+      0% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+  </style>
+
+</head>
+<body>
+  <div class="mensaje">
+    <p>Utilice los botones W, A, S y D o las teclas de dirección ↑, ↓, ← y → para desplazarse.</p>
+</div>
+  <a-scene vr-mode-ui="enabled: true">
+    <a-entity id="tablero" position="-5 0 -5"></a-entity>
+    <a-sky color="#808080" material="side: double;"></a-sky> 
+  </a-scene>
+
+  <script>
+    //Constantes para configurar el juego de la vida
+    const FILAS =20;
+    const COL =20;
+    const CELULA_SIZE=0.5;
+    const PROBABILIDAD_INICIAL =0.4;
+    //la representacion del tablero
+    const tableroEntidad=document.getElementById('tablero');
+    const celulas = [];//sera la matriz que guardara las celulas del tablero
+
+     //Inicializar el tablero con celulas vivas o muertas de manera aleatoria
+    for (let i = 0; i< FILAS;i++) {
+        celulas[i]=[];
+      for (let j = 0; j < COL;j++) {
+        const viva= Math.random() < PROBABILIDAD_INICIAL;
+        const celula= document.createElement('a-box');
+        celula.setAttribute('position', `${i * CELULA_SIZE} 0 ${j * CELULA_SIZE}`);
+        celula.setAttribute('width', CELULA_SIZE);
+        celula.setAttribute('height', CELULA_SIZE);
+        celula.setAttribute('depth', CELULA_SIZE);
+        celula.setAttribute('color', viva ? 'white' : 'black'); // Cambio de color aquí
+        celula.setAttribute('class', 'celula');
+        celula.viva = viva;
+        celulas[i][j] = celula;
+        tableroEntidad.appendChild(celula);
+      }
+    }
+     // actualizar el tablero en cada iteración del juego
+    setInterval(actualizartablero, 1200);
+
+    function actualizartablero() {
+        // La matriz  para guardar el estado de la proxima generacion de celulas
+      const proximaGeneracion= [];
+
+      // Recorre cada celula del tablero
+      for (let i= 0; i< FILAS;i++) {
+        proximaGeneracion[i] = [];
+        for (let j = 0; j< COL;j++) {
+            // Se calcula el numero de celulas vivas que son vecinas
+          const vivovecinos = cuentavivosvecinos(i, j);
+
+          //Se aplica las reglas del juego para poder saber ek esrado de la celula en la proxima genberacion
+          if (celulas[i][j].viva) {
+            if (vivovecinos< 2 ||vivovecinos > 3) {
+                proximaGeneracion[i][j]= false;
+            } else {
+                proximaGeneracion[i][j]= true;
+            }
+          } else {
+            if (vivovecinos===3) {
+                proximaGeneracion[i][j] = true;
+            } else {
+                proximaGeneracion[i][j] = false;
+            }
+          }
+        }
+      }
+
+       //Se actualiza visaulamente el tablero cone l estrado de la proxima generacion de celulas
+      for (let i = 0; i< FILAS;i++) {
+        for (let j = 0; j< COL;j++) {
+            celulas[i][j].setAttribute('color', proximaGeneracion[i][j] ? 'white' : 'black'); //Aqui se g¿hace el cambio de color
+            celulas[i][j].viva = proximaGeneracion[i][j];
+        }
+      }
+    }
+    
+      //funcion para contar el numero de celulas vivas vecinas de una celula en particular
+    function cuentavivosvecinos(row, col) {
+      let count = 0;
+      for (let i = -1; i<= 1;i++) {
+        for (let j = -1; j<= 1;j++) {
+          const f=row+ i;
+          const c=col+ j;
+          if (f >= 0 && f <FILAS && c>=0 && c <COL && !(i===0 && j===0)) {
+            count += celulas[f][c].viva ? 1 : 0;
+          }
+        }
+      }
+      return count;
+    }
+    ////////////////////////////
+     // Oculta un mensaje despues de cierto tiempo
+     function ocultarMensaje() {
+      const mensaje = document.querySelector('.mensaje');
+      mensaje.style.display = 'none';
+    }
+    setTimeout(ocultarMensaje, 5500);
+  </script>
+</body>
+</html>
